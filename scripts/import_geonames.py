@@ -13,11 +13,12 @@ import zipfile
 
 
 SOURCE_URL = "https://download.geonames.org/export/dump/cities500.zip"
+ADMIN1_URL = "https://download.geonames.org/export/dump/admin1CodesASCII.txt"
 LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
 DEFAULT_DATABASE = Path(__file__).resolve().parents[1] / "crates/web/catalog.sqlite"
 SCHEMA = """
 CREATE VIRTUAL TABLE birthplaces USING fts5(
-    name, ascii_name, alternate_names,
+    name, ascii_name, alternate_names, admin1_name, admin1_ascii_name,
     country_code UNINDEXED, admin1_code UNINDEXED, admin2_code UNINDEXED,
     admin3_code UNINDEXED, admin4_code UNINDEXED,
     latitude UNINDEXED, longitude UNINDEXED, population UNINDEXED,
@@ -30,9 +31,28 @@ INSERT = """
 INSERT INTO birthplaces (
     rowid, name, ascii_name, alternate_names, country_code,
     admin1_code, admin2_code, admin3_code, admin4_code,
-    latitude, longitude, population, timezone, feature_code, modification_date
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    latitude, longitude, population, timezone, feature_code, modification_date,
+    admin1_name, admin1_ascii_name
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
+
+
+def parse_admin1(payload):
+    divisions = {}
+    for number, line in enumerate(payload.decode("utf-8").splitlines(), 1):
+        try:
+            code, name, ascii_name, identifier = line.split("\t")
+            country, admin = code.split(".", 1)
+            if len(country) != 2 or not admin or not name or int(identifier) <= 0:
+                raise ValueError("invalid division record")
+            if code in divisions:
+                raise ValueError(f"duplicate division code: {code}")
+            divisions[code] = (name, ascii_name)
+        except ValueError as error:
+            raise ValueError(f"admin1CodesASCII.txt line {number}: {error}") from error
+    if not divisions:
+        raise ValueError("refusing to import empty administrative divisions")
+    return divisions
 
 
 def parse_record(line, number):
@@ -60,11 +80,13 @@ def parse_record(line, number):
         raise ValueError(f"cities500.txt line {number}: {error}") from error
 
 
-def import_archive(archive, database):
+def import_archive(archive, database, admin1):
     archive, database = Path(archive), Path(database).resolve()
     # Read one immutable snapshot for both hashing and importing; no ZIP extraction.
     payload = archive.read_bytes()
     checksum = hashlib.sha256(payload).hexdigest()
+    admin1_payload = Path(admin1).read_bytes()
+    divisions = parse_admin1(admin1_payload)
     with zipfile.ZipFile(io.BytesIO(payload)) as source:
         if source.namelist().count("cities500.txt") != 1:
             raise ValueError("archive must contain exactly one cities500.txt")
@@ -75,20 +97,27 @@ def import_archive(archive, database):
             connection.execute("DROP TABLE IF EXISTS birthplaces")
             connection.execute(SCHEMA)
             seen = set()
+            unmatched = 0
             with source.open("cities500.txt") as raw:
                 for number, line in enumerate(io.TextIOWrapper(raw, encoding="utf-8"), 1):
                     row = parse_record(line, number)
                     if row[0] in seen:
                         raise ValueError(f"duplicate GeoNames ID on line {number}: {row[0]}")
                     seen.add(row[0])
-                    connection.execute(INSERT, row)
+                    division = divisions.get(f"{row[4]}.{row[5]}")
+                    if division is None:
+                        unmatched += 1
+                    connection.execute(INSERT, row + (division or (None, None)))
             if not seen:
                 raise ValueError("refusing to import an empty cities500.txt")
             connection.execute("INSERT INTO birthplaces(birthplaces) VALUES ('optimize')")
             connection.execute("INSERT INTO birthplaces(birthplaces) VALUES ('integrity-check')")
             metadata = {
-                "schema_version": 1, "source_url": SOURCE_URL,
+                "schema_version": 2, "source_url": SOURCE_URL,
                 "archive_sha256": checksum, "rows": len(seen),
+                "admin1_source_url": ADMIN1_URL,
+                "admin1_sha256": hashlib.sha256(admin1_payload).hexdigest(),
+                "admin1_divisions": len(divisions), "rows_without_admin1_name": unmatched,
                 "attribution": "GeoNames", "license": "CC BY 4.0",
                 "license_url": LICENSE_URL,
             }
@@ -110,8 +139,10 @@ def main():
     parser.add_argument("--archive", type=Path, required=True,
                         help="saved cities500.zip (retained for offline replay)")
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
+    parser.add_argument("--admin1", type=Path, required=True,
+                        help="saved admin1CodesASCII.txt for state/region names")
     args = parser.parse_args()
-    print(json.dumps(import_archive(args.archive, args.database), indent=2))
+    print(json.dumps(import_archive(args.archive, args.database, args.admin1), indent=2))
 
 
 if __name__ == "__main__":

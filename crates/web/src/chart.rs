@@ -7,7 +7,7 @@ use axum::http::request::Parts;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use sweph::Sign;
-use crate::repository::{CelestialObject, ObjectImage, ObjectRepository};
+use crate::object::{CelestialObject, ObjectImage, ObjectRepository};
 use crate::state::State;
 
 #[derive(Clone)]

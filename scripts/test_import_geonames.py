@@ -23,6 +23,8 @@ class ImportTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.database = Path(self.directory.name) / "catalog.sqlite"
         self.archive = Path(self.directory.name) / "cities500.zip"
+        self.admin1 = Path(self.directory.name) / "admin1CodesASCII.txt"
+        self.admin1.write_text("BR.27\tSão Paulo\tSao Paulo\t3448433\n", encoding="utf-8")
         with closing(sqlite3.connect(self.database)) as db:
             db.execute("CREATE TABLE run_metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             db.execute("CREATE TABLE objects(id TEXT PRIMARY KEY)")
@@ -35,8 +37,8 @@ class ImportTests(unittest.TestCase):
 
     def test_search_and_reimport(self):
         self.write_archive(record())
-        first = import_archive(self.archive, self.database)
-        self.assertEqual(first, import_archive(self.archive, self.database))
+        first = import_archive(self.archive, self.database, self.admin1)
+        self.assertEqual(first, import_archive(self.archive, self.database, self.admin1))
         with closing(sqlite3.connect(self.database)) as db:
             for query in ('"sao" "pau"*', '"São" "Paulo"', '"samp"*', '"Сан"*'):
                 rows = db.execute(
@@ -50,7 +52,7 @@ class ImportTests(unittest.TestCase):
                 "SELECT value FROM run_metadata WHERE key='geonames_cities500'"
             ).fetchone()[0]), first)
         self.write_archive(record(123, "Replacement", ""))
-        import_archive(self.archive, self.database)
+        import_archive(self.archive, self.database, self.admin1)
         with closing(sqlite3.connect(self.database)) as db:
             self.assertEqual(db.execute("SELECT rowid FROM birthplaces").fetchall(), [(123,)])
             self.assertEqual(db.execute("SELECT rowid FROM birthplaces WHERE birthplaces "
@@ -58,13 +60,13 @@ class ImportTests(unittest.TestCase):
 
     def test_failed_import_rolls_back_data_and_metadata(self):
         self.write_archive(record())
-        original = import_archive(self.archive, self.database)
+        original = import_archive(self.archive, self.database, self.admin1)
         for invalid in ("", record(123) + "broken\n", record(123) * 2,
                         record(123).replace("-23.5475", "nan")):
             with self.subTest(invalid=invalid):
                 self.write_archive(invalid)
                 with self.assertRaises(ValueError):
-                    import_archive(self.archive, self.database)
+                    import_archive(self.archive, self.database, self.admin1)
                 with closing(sqlite3.connect(self.database)) as db:
                     self.assertEqual(db.execute("SELECT rowid FROM birthplaces").fetchall(), [(3448439,)])
                     self.assertEqual(json.loads(db.execute(
@@ -75,8 +77,47 @@ class ImportTests(unittest.TestCase):
         self.write_archive(record())
         missing = self.database.with_name("missing.sqlite")
         with self.assertRaises(sqlite3.OperationalError):
-            import_archive(self.archive, missing)
+            import_archive(self.archive, missing, self.admin1)
         self.assertFalse(missing.exists())
+
+    def test_states_disambiguate_cities_and_missing_divisions_keep_cities(self):
+        self.admin1.write_text(
+            "BR.18\tParaná\tParana\t3455077\n"
+            "BR.06\tCeará\tCeara\t3402362\n"
+            "XX.18\tDifferent country\tDifferent country\t123\n", encoding="utf-8",
+        )
+        self.write_archive(
+            record(3466779, "Cascavel", "").replace("\t27\t", "\t18\t")
+            + record(3402613, "Cascavel", "").replace("\t27\t", "\t06\t")
+            + record(123, "Unknown region", "")
+        )
+        result = import_archive(self.archive, self.database, self.admin1)
+        self.assertEqual(result["rows_without_admin1_name"], 1)
+        with closing(sqlite3.connect(self.database)) as db:
+            self.assertEqual(db.execute(
+                "SELECT rowid, admin1_name FROM birthplaces WHERE birthplaces MATCH 'cascavel' ORDER BY rowid"
+            ).fetchall(), [(3402613, "Ceará"), (3466779, "Paraná")])
+            self.assertEqual(db.execute(
+                "SELECT rowid FROM birthplaces WHERE birthplaces MATCH ?",
+                ('"cascavel" "paran"*',),
+            ).fetchall(), [(3466779,)])
+            self.assertEqual(db.execute(
+                "SELECT admin1_name FROM birthplaces WHERE rowid=123"
+            ).fetchone(), (None,))
+
+    def test_bad_divisions_preserve_existing_import(self):
+        self.write_archive(record())
+        original = import_archive(self.archive, self.database, self.admin1)
+        for invalid in ("", "broken\n", "BR.27\tSão Paulo\tSao Paulo\t3448433\n" * 2):
+            with self.subTest(invalid=invalid):
+                self.admin1.write_text(invalid, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    import_archive(self.archive, self.database, self.admin1)
+                with closing(sqlite3.connect(self.database)) as db:
+                    self.assertEqual(db.execute("SELECT admin1_name FROM birthplaces").fetchall(), [("São Paulo",)])
+                    self.assertEqual(json.loads(db.execute(
+                        "SELECT value FROM run_metadata WHERE key='geonames_cities500'"
+                    ).fetchone()[0]), original)
 
 
 if __name__ == "__main__":

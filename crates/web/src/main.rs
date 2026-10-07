@@ -1,7 +1,8 @@
 pub mod chart;
 mod state;
 mod entity;
-pub mod repository;
+pub mod object;
+pub mod birthplace;
 
 use crate::chart::{BirthChart, BirthChartRepository};
 use axum::extract::Path;
@@ -15,6 +16,7 @@ use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, fmt};
+use crate::birthplace::{Birthplace, BirthplaceRepository};
 
 // TODO: figure out a nice way to encode this all into a single string
 #[derive(Clone, Deserialize, Debug)]
@@ -42,6 +44,13 @@ async fn chart(
     })
 }
 
+async fn search(
+    Path(query): Path<String>,
+    birthplace_repository: BirthplaceRepository,
+) -> Json<Vec<Birthplace>> {
+    Json(birthplace_repository.search(query).await.unwrap())
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let env_filter =
@@ -57,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
     sweph::set_sidereal_mode(Ayanamsha::DeLuce);
     let app = Router::new()
         .route("/api/v1/chart/{latitude}/{longitude}/{time}", get(chart))
+        .route("/api/v1/search/{query}", get(search))
         .with_state(state::State::new().await)
         .layer(
             TraceLayer::new_for_http()
