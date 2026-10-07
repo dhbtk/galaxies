@@ -1,0 +1,5 @@
+{
+  "source": "esa-hubble",
+  "image_ids": ["potw1945a", "potw2538a", "opo9931a", "potw1108a"],
+  "note": "Small pipeline smoke sample, not a representative or complete galaxy catalog. Includes optional Ophiuchus."
+}

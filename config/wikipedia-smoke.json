@@ -1,0 +1,41 @@
+{
+  "source": "wikipedia-navboxes-v1",
+  "articles": [
+    {
+      "title": "NGC 7184",
+      "constellation": "Aquarius",
+      "template_title": "Template:Aquarius (constellation)",
+      "template_revision": 1376213191
+    },
+    {
+      "title": "NGC 7492",
+      "constellation": "Aquarius",
+      "template_title": "Template:Aquarius (constellation)",
+      "template_revision": 1376213191
+    },
+    {
+      "title": "NGC 7727",
+      "constellation": "Aquarius",
+      "template_title": "Template:Aquarius (constellation)",
+      "template_revision": 1376213191
+    },
+    {
+      "title": "NGC 772",
+      "constellation": "Aries",
+      "template_title": "Template:Aries (constellation)",
+      "template_revision": 1353446860
+    },
+    {
+      "title": "NGC 2775",
+      "constellation": "Cancer",
+      "template_title": "Template:Cancer (constellation)",
+      "template_revision": 1370476586
+    },
+    {
+      "title": "NGC 6907",
+      "constellation": "Capricornus",
+      "template_title": "Template:Capricornus",
+      "template_revision": 1364943452
+    }
+  ]
+}

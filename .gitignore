@@ -1,0 +1,7 @@
+/target/
+/data/
+/crates/galaxy-scraper/data*/
+/crates/galaxy-scraper/review/
+*.zip
+.DS_Store
+.idea/
