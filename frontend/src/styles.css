@@ -1,4 +1,9 @@
 :root {
+  --fire-color: #cc2332;
+  --air-color: #33eeff;
+  --earth-color: #339744;
+  --water-color: #4488ee;
+
   font-family: system-ui;
   color-scheme: only dark;
 }
@@ -15,4 +20,20 @@ body,
 
 body {
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
+
+.birth-form { max-width: 28rem; display: grid; gap: 1rem; }
+.form-field { display: grid; gap: .375rem; }
+.form-field p { margin: 0; }
+input, button { font: inherit; padding: .5rem; }
+.field-error { color: #ffaaa5; }
+.place-options { width: var(--input-width); background: #222; border: 1px solid #888; max-height: 18rem; overflow: auto; }
+.place-options:empty { display: none; }
+.place-option { padding: .5rem; cursor: pointer; }
+.place-option[data-focus] { background: #444; }
+.place-option[data-selected] { font-weight: bold; }
+.chart-json { overflow: auto; }

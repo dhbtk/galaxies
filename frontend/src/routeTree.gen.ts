@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChartLatitudeLongitudeTimeRouteImport } from './routes/chart.$latitude.$longitude.$time'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChartLatitudeLongitudeTimeRoute =
+  ChartLatitudeLongitudeTimeRouteImport.update({
+    id: '/chart/$latitude/$longitude/$time',
+    path: '/chart/$latitude/$longitude/$time',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chart/$latitude/$longitude/$time': typeof ChartLatitudeLongitudeTimeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chart/$latitude/$longitude/$time': typeof ChartLatitudeLongitudeTimeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/chart/$latitude/$longitude/$time': typeof ChartLatitudeLongitudeTimeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/chart/$latitude/$longitude/$time'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/chart/$latitude/$longitude/$time'
+  id: '__root__' | '/' | '/chart/$latitude/$longitude/$time'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChartLatitudeLongitudeTimeRoute: typeof ChartLatitudeLongitudeTimeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chart/$latitude/$longitude/$time': {
+      id: '/chart/$latitude/$longitude/$time'
+      path: '/chart/$latitude/$longitude/$time'
+      fullPath: '/chart/$latitude/$longitude/$time'
+      preLoaderRoute: typeof ChartLatitudeLongitudeTimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChartLatitudeLongitudeTimeRoute: ChartLatitudeLongitudeTimeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

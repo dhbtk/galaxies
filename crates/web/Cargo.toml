@@ -12,7 +12,7 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 serde.workspace = true
 serde_json.workspace = true
-tower-http = { version = "0.7.1", features = ["trace"] }
+tower-http = { version = "0.7.1", features = ["trace", "fs"] }
 chrono = { version = "0.4.45", features = ["serde"] }
 ephemerust = "0.7.0"
 sweph = "0.3.0"

@@ -68,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/chart/{latitude}/{longitude}/{time}", get(chart))
         .route("/api/v1/search/{query}", get(search))
         .with_state(state::State::new().await)
+        .nest_service("/images", tower_http::services::ServeDir::new("catalog-images"))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
