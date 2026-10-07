@@ -5,7 +5,7 @@ A Rust workspace for building a reproducible image catalog for a future birth-ch
 - `galaxy-catalog`: shared data model, image-size policy, deterministic ranking and selection.
 - `galaxy-scraper`: ESA/Hubble and Wikipedia discovery, SIMBAD coordinate resolution, image downloads, SQLite/JSON output and ZIP packaging.
 
-See [Wikipedia ingestion and visual review](docs/wikipedia.md) for the supplementary catalog and curated snapshot, and [distance enrichment](docs/distances.md) for object distances.
+See [Wikipedia ingestion and visual review](docs/wikipedia.md) for the supplementary catalog and curated snapshot, and [distance enrichment](docs/distances.md) for object distances. See [web image preparation](docs/web-images.md) for the site JPEG assets.
 
 Read [the research and product plan](docs/plan.md) before expanding the dataset. This is a working ingestion prototype, not a complete catalog or birth-chart calculator.
 
