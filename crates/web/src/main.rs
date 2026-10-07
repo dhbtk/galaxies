@@ -29,7 +29,6 @@ pub struct BirthChartResponse {
     pub chart: BirthChart,
 }
 
-#[axum::debug_handler(state = State)]
 async fn chart(
     Path(BirthChartRequest {
         latitude,

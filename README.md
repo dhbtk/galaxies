@@ -7,6 +7,8 @@ A Rust workspace for building a reproducible image catalog for a future birth-ch
 
 See [Wikipedia ingestion and visual review](docs/wikipedia.md) for the supplementary catalog and curated snapshot, and [distance enrichment](docs/distances.md) for object distances. See [web image preparation](docs/web-images.md) for the site JPEG assets.
 
+See [birthplace search](docs/birthplaces.md) for the GeoNames cities500 import and FTS5 queries in the web catalog.
+
 Read [the research and product plan](docs/plan.md) before expanding the dataset. This is a working ingestion prototype, not a complete catalog or birth-chart calculator.
 
 See [initial live results and verification](docs/prototype-results.md) for the bounded sample, exclusions and known unresolved entry.
