@@ -1,0 +1,9 @@
+.git
+.idea
+target
+data
+frontend
+docs
+crates/galaxy-scraper/data*
+crates/galaxy-scraper/review
+**/.env*

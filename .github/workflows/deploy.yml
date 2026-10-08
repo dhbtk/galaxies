@@ -1,0 +1,39 @@
+name: Deploy Galaxies
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: galaxies-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          install -m 600 /dev/null "$HOME/.ssh/galaxies_deploy"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/galaxies_deploy"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+      - name: Deploy through bastion to home server
+        run: |
+          ssh -T -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            -i "$HOME/.ssh/galaxies_deploy" ubuntu@home-bastion.dhbtk.com
+      - name: Verify public HTTPS
+        run: |
+          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
+            https://galaxies.dhbtk.com/api/health
+          curl --fail --silent --show-error --output /dev/null https://galaxies.dhbtk.com/

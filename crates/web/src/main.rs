@@ -65,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
     sweph::set_sidereal_mode(Ayanamsha::DeLuce);
     let app = Router::new()
+        .route("/api/health", get(|| async { "ok" }))
         .route("/api/v1/chart/{latitude}/{longitude}/{time}", get(chart))
         .route("/api/v1/search/{query}", get(search))
         .with_state(state::State::new().await)
