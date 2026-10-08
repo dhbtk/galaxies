@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 WORKDIR /app
 COPY --from=backend-build /web /usr/local/bin/galaxies-web
 COPY --chown=10001:10001 crates/web/catalog.sqlite ./
+RUN test "$(head -c 15 catalog.sqlite)" = 'SQLite format 3'
 COPY crates/web/catalog-images ./catalog-images
 USER 10001:10001
 ENV RUST_LOG=info

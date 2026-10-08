@@ -14,6 +14,8 @@ Only the Compose proxy publishes a port, bound to loopback. The tracked
 SQLite catalog and images are included in the backend image, so each build
 uses the catalog from that Git commit. This is a read-only application dataset,
 not a persistent user database.
+The catalog is tracked with Git LFS. The home server needs `git-lfs` installed;
+deploys run `git lfs pull`, and the image build checks the SQLite file header.
 
 ## Deploy
 
