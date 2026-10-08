@@ -14,6 +14,6 @@ if ! docker compose up -d --wait --wait-timeout 120; then
     docker compose logs --tail=80 >&2
     exit 1
 fi
-curl --fail --silent --show-error http://127.0.0.1:3020/api/health
-curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3020/
+curl --fail --silent --show-error --max-time 15 http://127.0.0.1:3020/api/health
+curl --fail --silent --show-error --max-time 15 --output /dev/null http://127.0.0.1:3020/
 docker compose ps

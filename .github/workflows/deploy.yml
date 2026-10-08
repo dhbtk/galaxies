@@ -34,6 +34,6 @@ jobs:
             -i "$HOME/.ssh/galaxies_deploy" ubuntu@home-bastion.dhbtk.com
       - name: Verify public HTTPS
         run: |
-          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
+          curl --fail --silent --show-error --max-time 30 --retry 6 --retry-all-errors --retry-delay 5 \
             https://galaxies.dhbtk.com/api/health
-          curl --fail --silent --show-error --output /dev/null https://galaxies.dhbtk.com/
+          curl --fail --silent --show-error --max-time 30 --output /dev/null https://galaxies.dhbtk.com/
