@@ -27,7 +27,7 @@ export const signColor = (sign: StarSign) => {
 const Wrapper = styled.div<{sign: StarSign, image: string, open: boolean}>`
   display: flex;
   flex-direction: column;
-  height: ${props => props.open ? '130dvw' : '8rem'};
+  height: ${props => props.open ? '36rem' : '8rem'};
   transition: height 0.3s ease-in-out;
   margin: 0.5rem;
   padding: 0.5rem;
